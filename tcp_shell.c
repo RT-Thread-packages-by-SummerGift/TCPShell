@@ -58,35 +58,35 @@ struct rt_tcpshell_session
 {
     struct rt_device device;
     const char *host;
-	
+    
     struct rt_ringbuffer rx_ringbuffer;
     struct rt_ringbuffer tx_ringbuffer;
-	
+    
     rt_mutex_t rx_ringbuffer_lock;
     rt_mutex_t tx_ringbuffer_lock;
-	
-	/* client  sock */
-    int sock;	
+    
+    /* client  sock */
+    int sock;   
     int port;
 
     /* publish sock */
     int pub_sock;
     int pub_port;
-	
+    
     rt_uint8_t echo_mode;
 };
 
 int tcpshell_local_send(struct rt_tcpshell_session* tcpshell, const void *data, int len)
 {
-	struct sockaddr_in server_addr = {0};
-	rt_uint8_t send_len;
-	server_addr.sin_family = AF_INET;
-	server_addr.sin_port = htons(tcpshell->pub_port);
-	server_addr.sin_addr = *((const struct in_addr *)&netif_default->ip_addr);
-	memset(&(server_addr.sin_zero), 0, sizeof(server_addr.sin_zero));
+    struct sockaddr_in server_addr = {0};
+    rt_uint8_t send_len;
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(tcpshell->pub_port);
+    server_addr.sin_addr = *((const struct in_addr *)&netif_default->ip_addr);
+    memset(&(server_addr.sin_zero), 0, sizeof(server_addr.sin_zero));
     send_len = sendto(tcpshell->pub_sock, data, len, MSG_DONTWAIT,
               (struct sockaddr *)&server_addr, sizeof(struct sockaddr));
-	return send_len;
+    return send_len;
 }
 
 /* process tx data */                                                                  
@@ -122,8 +122,8 @@ static void tcpshell_process_rx(struct rt_tcpshell_session* tcpshell, rt_uint8_t
          rt_mutex_take(tcpshell->rx_ringbuffer_lock, RT_WAITING_FOREVER);
          /* put buffer to ringbuffer */
          rt_ringbuffer_putchar(&(tcpshell->rx_ringbuffer), *data);
-         rt_mutex_release(tcpshell->rx_ringbuffer_lock);	
-		 data ++;
+         rt_mutex_release(tcpshell->rx_ringbuffer_lock);    
+         data ++;
     }
 
     rt_mutex_take(tcpshell->rx_ringbuffer_lock, RT_WAITING_FOREVER);
@@ -180,7 +180,7 @@ static rt_size_t tcpshell_read(rt_device_t dev, rt_off_t pos, void* buffer, rt_s
     rt_mutex_take(g_tcpshell->rx_ringbuffer_lock, RT_WAITING_FOREVER);
     result = rt_ringbuffer_get(&(g_tcpshell->rx_ringbuffer), buffer, size);
     rt_mutex_release(g_tcpshell->rx_ringbuffer_lock);
-	
+    
     return result;
 }
 
@@ -215,7 +215,7 @@ static rt_err_t tcpshell_control(rt_device_t dev, int cmd, void *args)
 }
 
 #define BUFSZ   1024
-#define SENDTO_BUF_LEN 64	
+#define SENDTO_BUF_LEN 64   
 static void tcp_shell_entry(void* parameter)
 {
     struct rt_tcpshell_session *tcp_shell =  g_tcpshell;                                       
@@ -230,7 +230,7 @@ static void tcp_shell_entry(void* parameter)
     struct timeval timeout_t;
     timeout_t.tv_sec = 1;
     timeout_t.tv_usec = 0;
-	
+    
     recv_data = rt_malloc(BUFSZ);
     if (recv_data == RT_NULL)
     {
@@ -256,25 +256,25 @@ static void tcp_shell_entry(void* parameter)
         rt_device_register(&g_tcpshell->device, RT_CONSOLE_TCPSHELL_DEVICE_NAME,
                          RT_DEVICE_FLAG_RDWR | RT_DEVICE_FLAG_STREAM);
     }
-	
-	struct sockaddr_in pub_server_addr; 
-	memset(&pub_server_addr,0,sizeof(struct sockaddr_in));                              
-	tcp_shell->pub_port = SHELL_UDP_PORT;
-	pub_server_addr.sin_len = sizeof(pub_server_addr);
-	pub_server_addr.sin_family = AF_INET;
-	pub_server_addr.sin_port = htons((tcp_shell->pub_port));
-	pub_server_addr.sin_addr.s_addr = INADDR_ANY;
-				
-_udpsocket: 	
-	if ((tcp_shell->pub_sock = socket(AF_INET, SOCK_DGRAM, 0)) == -1)           
+    
+    struct sockaddr_in pub_server_addr; 
+    memset(&pub_server_addr,0,sizeof(struct sockaddr_in));                              
+    tcp_shell->pub_port = SHELL_UDP_PORT;
+    pub_server_addr.sin_len = sizeof(pub_server_addr);
+    pub_server_addr.sin_family = AF_INET;
+    pub_server_addr.sin_port = htons((tcp_shell->pub_port));
+    pub_server_addr.sin_addr.s_addr = INADDR_ANY;
+                
+_udpsocket:     
+    if ((tcp_shell->pub_sock = socket(AF_INET, SOCK_DGRAM, 0)) == -1)           
     {
         rt_kprintf("Socket error\n");
         return;
     }
-	
-	rc = bind(tcp_shell->pub_sock, (struct sockaddr *)&pub_server_addr, sizeof(struct sockaddr_in));      /* bind publish socket. */
+    
+    rc = bind(tcp_shell->pub_sock, (struct sockaddr *)&pub_server_addr, sizeof(struct sockaddr_in));      /* bind publish socket. */
         
-_connect:	
+_connect:   
     if ((tcp_shell->sock = socket(AF_INET, SOCK_STREAM, 0)) == -1)
     {
         rt_kprintf("Socket error\n");
@@ -293,18 +293,18 @@ _connect:
         return;
     }
 
-	debug_printf("tcp shell socket connected.\n");	
-		
-	ret = lwip_send(tcp_shell->sock,send_data,sizeof(send_data), 0);
-	if (ret < 0)
-	{
-		lwip_close(tcp_shell->sock);
-		rt_kprintf("\nsend error,close the socket.\r\n");
-		goto _connect;
-	}else if (ret == 0)
-	{
-		rt_kprintf("\n Send warning,send function return 0.\r\n");
-	}
+    debug_printf("tcp shell socket connected.\n");  
+        
+    ret = lwip_send(tcp_shell->sock,send_data,sizeof(send_data), 0);
+    if (ret < 0)
+    {
+        lwip_close(tcp_shell->sock);
+        rt_kprintf("\nsend error,close the socket.\r\n");
+        goto _connect;
+    }else if (ret == 0)
+    {
+        rt_kprintf("\n Send warning,send function return 0.\r\n");
+    }
           
     /* set console */                                            // set console to tcpshell
     rt_console_set_device(RT_CONSOLE_TCPSHELL_DEVICE_NAME);
@@ -316,58 +316,58 @@ _connect:
     finsh_set_echo(g_tcpshell->echo_mode);  
     
     fd_set readset;                                             // initialize fd_set list for select
-	int maxfd;
+    int maxfd;
     
-	while(1)
-	{		
-		FD_ZERO(&readset);
+    while(1)
+    {       
+        FD_ZERO(&readset);
         FD_SET(tcp_shell->sock, &readset);
-		FD_SET(tcp_shell->pub_sock, &readset);
-		maxfd = MAX(tcp_shell->sock,tcp_shell->pub_sock);
-					
-		rc = lwip_select(maxfd + 1,&readset, RT_NULL, RT_NULL, &timeout_t);
-		if(0 == rc) continue;
-		
+        FD_SET(tcp_shell->pub_sock, &readset);
+        maxfd = MAX(tcp_shell->sock,tcp_shell->pub_sock);
+                    
+        rc = lwip_select(maxfd + 1,&readset, RT_NULL, RT_NULL, &timeout_t);
+        if(0 == rc) continue;
+        
         if (FD_ISSET(tcp_shell->sock, &readset))
         {
-			rt_memset(recv_data, 0, sizeof(recv_data));
-			
-			bytes_received = recv(tcp_shell->sock, recv_data, BUFSZ - 1, 0);
-			if (bytes_received < 0)
-			{
-				lwip_close(tcp_shell->sock);  
-				rt_kprintf("\nreceived error,close the socket.\r\n");
+            rt_memset(recv_data, 0, sizeof(recv_data));
+            
+            bytes_received = recv(tcp_shell->sock, recv_data, BUFSZ - 1, 0);
+            if (bytes_received < 0)
+            {
+                lwip_close(tcp_shell->sock);  
+                rt_kprintf("\nreceived error,close the socket.\r\n");
                 goto _connect;                                
-			}
-			else if (bytes_received == 0)
-			{           
+            }
+            else if (bytes_received == 0)
+            {           
                 rt_kprintf("\ntcp disconnected.\r\n");
                 client_close(tcp_shell);                        
-				rt_free(recv_data);
+                rt_free(recv_data);
                 break;                                
-			}
-			tcpshell_process_rx(g_tcpshell, (rt_uint8_t *)recv_data, bytes_received);			
-	     }
-		
+            }
+            tcpshell_process_rx(g_tcpshell, (rt_uint8_t *)recv_data, bytes_received);           
+         }
+        
         if (FD_ISSET(tcp_shell->pub_sock, &readset))
         {
             struct sockaddr_in pub_client_addr;
-            uint32_t addr_len = sizeof(struct sockaddr);	 		
+            uint32_t addr_len = sizeof(struct sockaddr);            
             len = recvfrom(tcp_shell->pub_sock, sendto_buf, SENDTO_BUF_LEN, MSG_DONTWAIT,
-                             (struct sockaddr *)&pub_client_addr, &addr_len);	
+                             (struct sockaddr *)&pub_client_addr, &addr_len);   
             
-			rc = lwip_send(tcp_shell->sock, sendto_buf, len,0);	                     
-			if (ret < 0)
-			{
-				lwip_close(tcp_shell->sock);
-				rt_kprintf("\nsend error,close the socket.\r\n");
-				goto _connect;
-			}
-			else if (ret == 0)
-			{
-				rt_kprintf("\n Send warning,send function return 0.\r\n");
-			}							
-        } 	
+            rc = lwip_send(tcp_shell->sock, sendto_buf, len,0);                      
+            if (ret < 0)
+            {
+                lwip_close(tcp_shell->sock);
+                rt_kprintf("\nsend error,close the socket.\r\n");
+                goto _connect;
+            }
+            else if (ret == 0)
+            {
+                rt_kprintf("\n Send warning,send function return 0.\r\n");
+            }                           
+        }   
     }
     
 _exit:
@@ -376,12 +376,12 @@ _exit:
 
 rt_uint8_t sendtoserver(void)
 {
-	rt_uint8_t len;
-	char buf[64];	
+    rt_uint8_t len;
+    char buf[64];   
     len = sprintf(buf,"today is a sunny day. %d\n",g_count);     
-	tcpshell_local_send(g_tcpshell,buf, len);	
+    tcpshell_local_send(g_tcpshell,buf, len);   
     g_count++;
-	memset(buf,0,sizeof(buf));
+    memset(buf,0,sizeof(buf));
     return 0;
 }
 FINSH_FUNCTION_EXPORT(sendtoserver, sendtoserver);
@@ -390,7 +390,7 @@ FINSH_FUNCTION_EXPORT(sendtoserver, sendtoserver);
  * This function initializes tcp_shell
  */
 void tcpshell_start(void)
-{	
+{   
     if (g_tcpshell == RT_NULL)
     {
         rt_uint8_t *ptr;
@@ -428,27 +428,27 @@ void tcpshell_start(void)
         g_tcpshell->rx_ringbuffer_lock = rt_mutex_create("tcpshell_rx", RT_IPC_FLAG_FIFO);
         
         g_tcpshell_start_times = 0;  //mark as first time start up
-		
-	    rt_thread_t tid;
-	    tid = rt_thread_create("tcpshell",
+        
+        rt_thread_t tid;
+        tid = rt_thread_create("tcpshell",
                            tcp_shell_entry, RT_NULL,
                            2048, RT_THREAD_PRIORITY_MAX / 3 - 1, 5);
-	    if (tid != RT_NULL)
-            rt_thread_startup(tid);		
+        if (tid != RT_NULL)
+            rt_thread_startup(tid);     
     }
     else
     {
         g_tcpshell_start_times = 1; //not first time start up
         rt_kprintf("tcpshell: start up again.\n");
-      	rt_thread_t tid;
-	    tid = rt_thread_create("tcpshell",
+        rt_thread_t tid;
+        tid = rt_thread_create("tcpshell",
                            tcp_shell_entry, RT_NULL,
                            2048, RT_THREAD_PRIORITY_MAX / 3 - 1, 5);
-	    if (tid != RT_NULL)
-            rt_thread_startup(tid);	
+        if (tid != RT_NULL)
+            rt_thread_startup(tid); 
     }
 }
-	
+    
 #ifdef RT_USING_FINSH
 #include <finsh.h>
 FINSH_FUNCTION_EXPORT(tcpshell_start, startup tcpshell);
